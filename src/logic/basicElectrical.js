@@ -5,6 +5,15 @@ export function electriCalculator({ system, mode, voltage, current, apparentPowe
     if (mode === "apparentPower") {
         return singlePhasePower(voltage, current);
     }
+    if (mode === "activePower") {
+        return calculatePower({
+            mode,
+            apparentPower,
+            activePower,
+            reactivePower: null,
+            powerFactor
+        });
+        }
     if (mode === "CurrentFromActivePowerPF") {
         const result = calculateAparentPower(activePower, powerFactor);
         if (result.error) {
@@ -25,6 +34,15 @@ export function electriCalculator({ system, mode, voltage, current, apparentPowe
     if (mode === "apparentPower") {
         return threePhasePower(voltage, current);
     }
+    if (mode === "activePower") {
+        return calculatePower({
+            mode,
+            apparentPower,
+            activePower,
+            reactivePower: null,
+            powerFactor
+        });
+        }
     if (mode === "CurrentFromActivePowerPF") {
         const result = calculateAparentPower(activePower, powerFactor);
         if (result.error) {
@@ -54,7 +72,46 @@ export function calculatePower({ mode, apparentPower, activePower, reactivePower
         return calculatePowerFactor(activePower, apparentPower);
     }
     if (mode === "reactivePower") {
-        return calculateReactivePower(apparentPower, activePower);
+        const reactive = calculateReactivePower(apparentPower, activePower);
+
+        if (reactive.error) {
+            return reactive;
+        }
+
+        const pf = calculatePowerFactor(activePower, apparentPower);
+
+        if (pf.error) {
+            return pf;
+        }
+
+        return {
+            value: {
+                val1: reactive.value,
+                val2: pf.value
+            },
+            error: null
+        };
+    }
+    if (mode == "reactiveFromActivePF") {
+        const reactive = calculateReactivePowerFromActivePF( activePower, powerFactor);
+
+        if (reactive.err) {
+            return reactive;
+        }
+
+        const apparent = calculateAparentPower( activePower, powerFactor );
+
+        if (apparent.err) {
+            return apparent
+        }
+
+        return {
+            value: {
+                val1: reactive.value,
+                val2: apparent.value
+            },
+            error: null
+        }
     }
 
     return null;
@@ -218,6 +275,9 @@ function calculatePowerFactor(activePower, apparentPower) {
     if (apparentPower === 0) {
         return { value: null, error: "La potencia aparente no puede ser cero." };
     }
+    if (apparentPower < activePower) {
+        return { value: null, error: "La potencia aparente no puede ser menor que la potencia activa" };
+    }
     return { value: activePower / apparentPower, error: null };
 }
 
@@ -237,5 +297,25 @@ function calculateReactivePower(apparentPower, activePower) {
     if (apparentPower === 0) {
         return { value: null, error: "La potencia aparente no puede ser cero." };
     }
+    if (apparentPower < activePower) {
+        return { value: null, error: "La potencia aparente no puede ser menor que la potencia activa." };
+    }
     return { value: Math.sqrt(apparentPower ** 2 - activePower ** 2), error: null };
+}
+
+function calculateReactivePowerFromActivePF(activePower, powerFactor) {
+    if (typeof activePower !== "number" || typeof powerFactor !== "number") {
+        return { value: null, error: "Los parámetros deben ser números." };
+    }
+    if (!isFinite(activePower) || !isFinite(powerFactor)) {
+        return { value: null, error: "Los parámetros deben ser números finitos." };
+    }
+    if (activePower < 0) {
+        return { value: null, error: "La potencia activa no puede ser negativa." };
+    }
+    if ( powerFactor <= 0 || powerFactor > 1 ) {
+        return { value: null, error: "El factor de potencia no puede ser menor 0, ni mayor que 1." };
+    }
+    const apparentPower1 = activePower / powerFactor
+    return { value: Math.sqrt(apparentPower1 ** 2 - activePower ** 2), error: null };
 }

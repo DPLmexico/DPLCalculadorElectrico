@@ -21,6 +21,7 @@ export default function BasicElectricalCalculator() {
     activePower,
     powerFactor,
   });
+  console.log(electriCalc);
 
   const powerCalc = calculatePower({
     mode,
@@ -29,13 +30,12 @@ export default function BasicElectricalCalculator() {
     reactivePower,
     powerFactor,
   });
-  console.log("Resultado del cálculo de potencia aparente para la corriente con potencia activa y factor de potencia:", powerCalc);
-
 
   const modes = {
       voltage: { title: "Voltaje", unit: "V" },
       current: { title: "Corriente", unit: "A" },
       apparentPower: { title: "Potencia Aparente", unit: "VA" },
+      activePower : { title: "Potencia Activa", unit: "W"},
       CurrentFromActivePowerPF: { title: "Corriente (con Potencia Activa y Factor de Potencia)", unit: "A" },
   };
 
@@ -67,6 +67,8 @@ export default function BasicElectricalCalculator() {
             <option value="voltage">Voltaje</option>
             <option value="current">Corriente</option>
             <option value="apparentPower">Potencia Aparente</option>
+            <option value="activePower">Potencia Activa</option>
+            <option value="reactivePower">Potencia Reactiva</option>
             <option value="CurrentFromActivePowerPF">Corriente (con Potencia Activa y Factor de Potencia)</option>
           </select>
         </div>
@@ -88,6 +90,18 @@ export default function BasicElectricalCalculator() {
                 <>
                   <Input label="Voltaje" value={voltage} setValue={setVoltage} unit="V" />
                   <Input label="Corriente" value={current} setValue={setCurrent} unit="A" />
+                </>
+            )}
+            { mode === "activePower" && (
+                <>
+                  <Input label="Potencia aparente" value={apparentPower} setValue={setApparentPower} unit="VA" />
+                  <Input label="Factor de potencia" value={powerFactor} setValue={setPowerFactor} unit="" />
+                </>
+            )}
+            { mode === "reactivePower" && (
+                <>
+                  <Input label="Potencia aparente" value={apparentPower} setValue={setApparentPower} unit="VA" />
+                  <Input label="Potencia activa" value={activePower} setValue={setActivePower} unit="W" />
                 </>
             )}
             { mode === "CurrentFromActivePowerPF" && (
@@ -120,6 +134,20 @@ export default function BasicElectricalCalculator() {
                     value={(powerCalc?.val2?.value)}
                     unit={"VAR"}
                 />
+                )}
+            {mode === "reactivePower" && (
+                <Result
+                      title={"Potencia Reactiva"}
+                      value={(powerCalc?.value?.val1)}
+                      unit={"VAR"}
+                  />
+                )}
+            {mode === "reactivePower" && (
+                <Result
+                      title={"Factor de Potencia"}
+                      value={(powerCalc?.value?.val2)}
+                      unit={""}
+                  />
                 )}
             {electriCalc?.error && (
                 <div className="mt-4 rounded-lg border border-red-500 bg-red-900/20 p-3 text-red-400">
