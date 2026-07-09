@@ -1,6 +1,4 @@
 export function electriCalculator({ system, mode, voltage, current, apparentPower, activePower, powerFactor }) {
-  const sqrt3 = Math.sqrt(3);
-
   if (system === "mono") {
     if (mode === "apparentPower") {
         return singlePhasePower(voltage, current);
@@ -10,7 +8,6 @@ export function electriCalculator({ system, mode, voltage, current, apparentPowe
             mode,
             apparentPower,
             activePower,
-            reactivePower: null,
             powerFactor
         });
         }
@@ -39,7 +36,6 @@ export function electriCalculator({ system, mode, voltage, current, apparentPowe
             mode,
             apparentPower,
             activePower,
-            reactivePower: null,
             powerFactor
         });
         }
@@ -61,7 +57,7 @@ export function electriCalculator({ system, mode, voltage, current, apparentPowe
   return null;
 }
 
-export function calculatePower({ mode, apparentPower, activePower, reactivePower, powerFactor }) {
+export function calculatePower({ mode, apparentPower, activePower, powerFactor }) {
     if (mode === "apparentPower" || mode === "CurrentFromActivePowerPF") {
         return { val1: calculateAparentPower(activePower, powerFactor), val2: calculateReactivePower(activePower/powerFactor , activePower) };
     }
@@ -95,13 +91,13 @@ export function calculatePower({ mode, apparentPower, activePower, reactivePower
     if (mode == "reactiveFromActivePF") {
         const reactive = calculateReactivePowerFromActivePF( activePower, powerFactor);
 
-        if (reactive.err) {
+        if (reactive.error) {
             return reactive;
         }
 
         const apparent = calculateAparentPower( activePower, powerFactor );
 
-        if (apparent.err) {
+        if (apparent.error) {
             return apparent
         }
 

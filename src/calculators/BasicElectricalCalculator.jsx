@@ -24,6 +24,9 @@ const MODULES = {
   dc: "CD",
 };
 
+const MAIN_SITE_URL = "https://www.dplmexico.com";
+const GITHUB_REPO_URL = "https://github.com/DPLmexico/DPLelectricCalc";
+
 const AC_MODES = [
   { value: "voltage", label: "Voltaje" },
   { value: "current", label: "Corriente" },
@@ -100,7 +103,6 @@ async function exportPDF(history) {
   doc.text(`Generado: ${new Date().toLocaleString("es-MX")}`, 14, 22);
 
   let y = 38;
-  const lineH = 7;
   const pageH = 270;
 
   history.forEach((h, idx) => {
@@ -159,9 +161,8 @@ export default function BasicElectricalCalculator() {
   const [acMode, setAcMode] = useState("current");
   const [voltage, setVoltage] = useState(220);
   const [current, setCurrent] = useState(10);
-  const [apparentPower, setApparentPower] = useState(500);
+  const [apparentPower, setApparentPower] = useState(1000);
   const [activePower, setActivePower] = useState(900);
-  const [reactivePower, setReactivePower] = useState(400);
   const [powerFactor, setPowerFactor] = useState(0.9);
 
   // ── Estado Impedancia ──
@@ -200,7 +201,6 @@ export default function BasicElectricalCalculator() {
     mode: acMode,
     apparentPower,
     activePower,
-    reactivePower,
     powerFactor,
   });
 
@@ -237,7 +237,7 @@ export default function BasicElectricalCalculator() {
     if (activeModule === "ac") {
       const modeLabel = AC_MODES.find((m) => m.value === acMode)?.label || acMode;
       let inputs = "";
-      let result = "";
+      let result;
 
       if (acMode === "current") inputs = `V=${voltage}V, S=${apparentPower}VA`;
       else if (acMode === "voltage") inputs = `I=${current}A, S=${apparentPower}VA`;
@@ -286,17 +286,12 @@ export default function BasicElectricalCalculator() {
     if (activeModule === "deltaStar") {
       const modeLabel = DELTA_STAR_MODES.find((m) => m.value === dsMode)?.label || dsMode;
       const topology = dsMode.startsWith("star") ? "Estrella" : "Delta";
-      let inputs = "";
-      let result = "";
+      const dsConfig = DELTA_STAR_CONFIG[dsMode];
+      const dsInputValues = { Vline: dsVline, Vphase: dsVphase, Iline: dsIline, Iphase: dsIphase };
+      const inputs = dsConfig ? `${dsConfig.inputLabel}=${dsInputValues[dsConfig.inputKey]}${dsConfig.unit}` : "";
 
-      if (dsMode.includes("Vline")) inputs = `V_línea=${dsVline}V`;
-      else if (dsMode.includes("Vphase")) inputs = `V_fase=${dsVphase}V`;
-      else if (dsMode.includes("Iline")) inputs = `I_línea=${dsIline}A`;
-      else if (dsMode.includes("Iphase")) inputs = `I_fase=${dsIphase}A`;
-
-      const u = dsMode.includes("_V") ? "V" : "A";
-      result = Number.isFinite(dsResult?.value)
-        ? `${dsResult.value.toFixed(3)} ${u}${dsResult.note ? ` (${dsResult.note})` : ""}`
+      const result = Number.isFinite(dsResult?.value)
+        ? `${dsResult.value.toFixed(3)} ${dsConfig?.unit || ""}${dsResult.note ? ` (${dsResult.note})` : ""}`
         : dsResult?.error || "Error";
 
       entry = { timestamp: now, module: topology, mode: modeLabel, inputs, result };
@@ -326,7 +321,7 @@ export default function BasicElectricalCalculator() {
     if (entry) {
       setHistory((prev) => [entry, ...prev]);
     }
-  }, [activeModule, acMode, acSystem, voltage, current, apparentPower, activePower, reactivePower, powerFactor,
+  }, [activeModule, acMode, acSystem, voltage, current, apparentPower, activePower, powerFactor,
       acResult, impMode, impR, impX, impZ, impResult, dsMode, dsVline, dsVphase, dsIline, dsIphase, dsResult,
       dcMode, dcVoltage, dcCurrent, dcResistance, dcPower, dcResult]);
 
@@ -336,13 +331,7 @@ export default function BasicElectricalCalculator() {
     <div className="min-h-screen bg-black p-4 font-body text-text-base md:p-6">
       <div className="mx-auto max-w-3xl space-y-4">
 
-        {/* Header */}
-        <div className="rounded-xl border border-border-custom bg-surface p-5">
-          <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-green">
-            DPL ElectriCalc
-          </h1>
-          <p className="mt-1 text-sm text-text-muted">Calculadora Eléctrica Básica — v1.0</p>
-        </div>
+        <Header />
 
         {/* Selector de módulo */}
         <div className="grid grid-cols-4 gap-2">
@@ -373,7 +362,6 @@ export default function BasicElectricalCalculator() {
               current={current} setCurrent={setCurrent}
               apparentPower={apparentPower} setApparentPower={setApparentPower}
               activePower={activePower} setActivePower={setActivePower}
-              reactivePower={reactivePower} setReactivePower={setReactivePower}
               powerFactor={powerFactor} setPowerFactor={setPowerFactor}
               acResult={acResult}
               powerResult={powerResult}
@@ -433,15 +421,61 @@ export default function BasicElectricalCalculator() {
             onExportPDF={() => exportPDF(history)}
           />
         )}
+
+        <Footer />
       </div>
     </div>
+  );
+}
+
+// ─── Header / Footer ──────────────────────────────────────────────────────────
+
+function Header() {
+  return (
+    <header className="rounded-xl border border-border-custom bg-surface p-5">
+      <div className="flex items-center justify-between gap-4">
+        <a href={MAIN_SITE_URL} aria-label="Volver a DPL México" className="shrink-0">
+          <img src={`${import.meta.env.BASE_URL}dpl-logo.png`} alt="DPL México" className="h-7 w-auto" />
+        </a>
+        <a
+          href={MAIN_SITE_URL}
+          className="font-display text-xs font-semibold uppercase tracking-widest text-text-muted transition hover:text-green"
+        >
+          ← Volver al sitio
+        </a>
+      </div>
+      <h1 className="mt-4 font-display text-2xl font-bold uppercase tracking-wide text-green">
+        DPL ElectriCalc
+      </h1>
+      <p className="mt-1 text-sm text-text-muted">Calculadora Eléctrica Básica — v1.0</p>
+    </header>
+  );
+}
+
+function Footer() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="rounded-xl border border-border-custom bg-surface p-5 text-center">
+      <p className="text-xs leading-relaxed text-text-muted">
+        © {year} DPL México. Los resultados son de referencia — verifica siempre contra la
+        normativa vigente (NOM) antes de aplicarlos en campo.
+      </p>
+      <a
+        href={GITHUB_REPO_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 inline-block font-display text-xs font-semibold uppercase tracking-widest text-text-muted transition hover:text-green"
+      >
+        Código en GitHub ↗
+      </a>
+    </footer>
   );
 }
 
 // ─── Sub-módulos ─────────────────────────────────────────────────────────────
 
 function ACModule({ system, setSystem, mode, setMode, voltage, setVoltage, current, setCurrent,
-  apparentPower, setApparentPower, activePower, setActivePower, reactivePower, setReactivePower,
+  apparentPower, setApparentPower, activePower, setActivePower,
   powerFactor, setPowerFactor, acResult, powerResult }) {
 
   const acModes = {
