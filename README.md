@@ -30,3 +30,7 @@ src/
   calculators/   Componente principal de la calculadora (UI)
   logic/         Funciones puras de cálculo (CA, impedancia, Delta/Estrella, CD)
 ```
+
+## Licencia
+
+MIT — ver [LICENSE](./LICENSE).
