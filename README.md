@@ -1,4 +1,4 @@
-# DPL ElectriCalc
+# Calculadora Eléctrica de DPL
 
 Calculadora eléctrica web para cálculos de electricidad básica: CA (monofásico/trifásico), impedancia, conversión Delta/Estrella y CD. Incluye historial de cálculos en sesión con exportación a CSV y PDF.
 

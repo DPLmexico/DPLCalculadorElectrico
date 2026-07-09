@@ -25,7 +25,7 @@ const MODULES = {
 };
 
 const MAIN_SITE_URL = "https://www.dplmexico.com";
-const GITHUB_REPO_URL = "https://github.com/DPLmexico/DPLelectricCalc";
+const GITHUB_REPO_URL = "https://github.com/DPLmexico/DPLCalculadorElectrico";
 
 const AC_MODES = [
   { value: "voltage", label: "Voltaje" },
@@ -445,7 +445,7 @@ function Header() {
         </a>
       </div>
       <h1 className="mt-4 font-display text-2xl font-bold uppercase tracking-wide text-green">
-        DPL ElectriCalc
+        Calculadora Eléctrica de DPL
       </h1>
       <p className="mt-1 text-sm text-text-muted">Calculadora Eléctrica Básica — v1.0</p>
     </header>
