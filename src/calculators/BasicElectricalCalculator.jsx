@@ -554,17 +554,34 @@ function ImpedanceModule({ mode, setMode, Z, setZ, R, setR, X, setX, result }) {
   );
 }
 
-function DeltaStarModule({ mode, setMode, Vline, setVline, Vphase, setVphase, Iline, setIline, Iphase, setIphase, result }) {
-  const isVline = mode.includes("Vline");
-  const isVphase = mode.includes("Vphase");
-  const isIline = mode.includes("Iline");
-  const isIphase = mode.includes("Iphase");
+// Config explícita: un único campo de entrada por modo, sin inferencia de texto.
+const DELTA_STAR_CONFIG = {
+  star_VlineFromVphase: { inputKey: "Vphase", inputLabel: "Tensión de Fase", resultLabel: "Tensión de Línea", unit: "V" },
+  star_VphaseFromVline: { inputKey: "Vline", inputLabel: "Tensión de Línea", resultLabel: "Tensión de Fase", unit: "V" },
+  star_IlineFromIphase: { inputKey: "Iphase", inputLabel: "Corriente de Fase", resultLabel: "Corriente de Línea", unit: "A" },
+  star_IphaseFromIline: { inputKey: "Iline", inputLabel: "Corriente de Línea", resultLabel: "Corriente de Fase", unit: "A" },
+  delta_VlineFromVphase: { inputKey: "Vphase", inputLabel: "Tensión de Fase", resultLabel: "Tensión de Línea", unit: "V" },
+  delta_VphaseFromVline: { inputKey: "Vline", inputLabel: "Tensión de Línea", resultLabel: "Tensión de Fase", unit: "V" },
+  delta_IlineFromIphase: { inputKey: "Iphase", inputLabel: "Corriente de Fase", resultLabel: "Corriente de Línea", unit: "A" },
+  delta_IphaseFromIline: { inputKey: "Iline", inputLabel: "Corriente de Línea", resultLabel: "Corriente de Fase", unit: "A" },
+};
 
-  const resultLabel = mode.includes("_Vline") ? "Tensión de Línea"
-    : mode.includes("_Vphase") ? "Tensión de Fase"
-    : mode.includes("_Iline") ? "Corriente de Línea"
-    : "Corriente de Fase";
-  const resultUnit = mode.includes("_V") ? "V" : "A";
+function DeltaStarModule({ mode, setMode, Vline, setVline, Vphase, setVphase, Iline, setIline, Iphase, setIphase, result }) {
+  const config = DELTA_STAR_CONFIG[mode];
+
+  // Mapa de key → [value, setter] para resolver dinámicamente cuál mostrar
+  const fieldMap = {
+    Vline: [Vline, setVline],
+    Vphase: [Vphase, setVphase],
+    Iline: [Iline, setIline],
+    Iphase: [Iphase, setIphase],
+  };
+
+  if (!config) {
+    return <ErrorCard error={`Modo desconocido: ${mode}`} />;
+  }
+
+  const [inputValue, setInputValue] = fieldMap[config.inputKey];
 
   return (
     <div className="space-y-5">
@@ -573,15 +590,13 @@ function DeltaStarModule({ mode, setMode, Vline, setVline, Vphase, setVphase, Il
         {DELTA_STAR_MODES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
       </SelectField>
 
+      {/* Un solo campo de entrada — el único relevante para este modo */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {isVline && <NumberInput label="Tensión de Línea" value={Vline} onChange={setVline} unit="V" />}
-        {isVphase && <NumberInput label="Tensión de Fase" value={Vphase} onChange={setVphase} unit="V" />}
-        {isIline && <NumberInput label="Corriente de Línea" value={Iline} onChange={setIline} unit="A" />}
-        {isIphase && <NumberInput label="Corriente de Fase" value={Iphase} onChange={setIphase} unit="A" />}
+        <NumberInput label={config.inputLabel} value={inputValue} onChange={setInputValue} unit={config.unit} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <ResultCard title={resultLabel} value={result?.value} unit={resultUnit} />
+        <ResultCard title={config.resultLabel} value={result?.value} unit={config.unit} />
         {result?.note && (
           <div className="flex items-center rounded-xl border border-border-custom bg-surface2 p-4">
             <span className="text-sm text-text-muted italic">{result.note}</span>
