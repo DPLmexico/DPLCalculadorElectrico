@@ -33,4 +33,4 @@ src/
 
 ## Licencia
 
-MIT — ver [LICENSE](./LICENSE).
+MIT — ver [LICENSE](./LICENSE). El nombre y logo de "DPL México" están excluidos de la licencia y no son de uso libre.
